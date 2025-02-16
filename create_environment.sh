@@ -2,105 +2,94 @@
 # Script to create submission reminder app environment
 
 # Ask for user's name
-echo "Please enter your name: "
-read -r name
+read -p "Enter your name: " name
 
-# Create main directory
+# Create main application directory
 main_dir="submission_reminder_${name}"
-mkdir -p "$main_dir"
+mkdir -p "$main_dir/app" "$main_dir/modules" "$main_dir/assets" "$main_dir/config"
 
-# Create subdirectories
-mkdir -p "$main_dir/config"
-mkdir -p "$main_dir/src"
-mkdir -p "$main_dir/data"
-mkdir -p "$main_dir/logs"
-
-# Create files
-# Config file
+# Create config.env in the config directory
 cat > "$main_dir/config/config.env" << 'EOL'
-# App configuration
-APP_NAME="Submission Reminder"
-LOG_FILE="../logs/app.log"
-DATA_FILE="../data/submissions.txt"
-CHECK_INTERVAL=3600  # in seconds
+# App Configuration
+ASSIGNMENT="Operating Systems"
+DAYS_REMAINING=3
 EOL
 
-# Functions file
-cat > "$main_dir/src/functions.sh" << 'EOL'
+# Create reminder.sh in the app directory
+cat > "$main_dir/app/reminder.sh" << 'EOL'
 #!/usr/bin/env bash
 
-# Function to log messages
-log_message() {
-    echo "$(date '+%Y-%m-%d %H:%M:%S') - $1" >> "$LOG_FILE"
-}
-
-# Function to check submission deadlines
-check_deadlines() {
-    while IFS=',' read -r student assignment deadline status; do
-        if [ "$status" = "pending" ]; then
-            current_time=$(date +%s)
-            deadline_time=$(date -d "$deadline" +%s)
-            time_diff=$((deadline_time - current_time))
-            
-            if [ $time_diff -lt 86400 ] && [ $time_diff -gt 0 ]; then
-                log_message "WARNING: $student has less than 24 hours to submit $assignment"
-                echo "REMINDER: $student has less than 24 hours to submit $assignment"
-            fi
-        fi
-    done < "$DATA_FILE"
-}
-EOL
-
-# Reminder script
-cat > "$main_dir/src/reminder.sh" << 'EOL'
-#!/usr/bin/env bash
-
-# Source configuration and functions
+# Source environment variables and helper functions
 source ../config/config.env
-source ./functions.sh
+source ../modules/functions.sh
 
-# Main reminder loop
-while true; do
-    echo "Checking submission deadlines..."
-    check_deadlines
-    sleep "$CHECK_INTERVAL"
-done
+# Path to the submissions file
+submissions_file="../assets/submissions.txt"
+
+# Print assignment details
+echo "Assignment: $ASSIGNMENT"
+echo "Days remaining to submit: $DAYS_REMAINING days"
+echo "--------------------------------------------"
+
+# Check submissions
+check_submissions "$submissions_file"
+EOL
+chmod +x "$main_dir/app/reminder.sh"
+
+# Create functions.sh in the modules directory
+cat > "$main_dir/modules/functions.sh" << 'EOL'
+#!/usr/bin/env bash
+
+# Function to check pending submissions
+check_submissions() {
+    local submissions_file=$1
+    echo "Checking submissions in $submissions_file..."
+
+    # Skip the header and iterate through lines
+    while IFS=',' read -r student assignment status; do
+        # Trim whitespace
+        student=$(echo "$student" | xargs)
+        assignment=$(echo "$assignment" | xargs)
+        status=$(echo "$status" | xargs)
+
+        # Check if assignment matches and status is 'not submitted'
+        if [[ "$assignment" == "$ASSIGNMENT" && "$status" == "not submitted" ]]; then
+            echo "Reminder: $student has not submitted the $ASSIGNMENT assignment!"
+        fi
+    done < <(tail -n +2 "$submissions_file") # Skip the header
+}
+EOL
+chmod +x "$main_dir/modules/functions.sh"
+
+# Create submissions.txt in the assets directory
+cat > "$main_dir/assets/submissions.txt" << 'EOL'
+student, assignment, submission status
+Mugisha, Operating Systems, not submitted
+Aline, Data Structures, submitted
+Peter, Computer Networks, not submitted
+Zuba, Databases, submitted
+Benjamin, Web Development, not submitted
+Iradukunda, Algorithms, not submitted
+Uwase, Computer Networks, submitted
+Kwizera, Cybersecurity, not submitted
+Niyonzima, Artificial Intelligence, not submitted
+Cedrick, Databases, submitted
+Ishimwe, Software Engineering, not submitted
+Gasana, Cloud Computing, submitted
+Ingabire, Operating Systems, not submitted
+Kayinamura, Machine Learning, not submitted
+Manzi, Shell Scripting, not submitted
 EOL
 
-# Create submissions.txt with sample data
-cat > "$main_dir/data/submissions.txt" << 'EOL'
-John Doe,Project 1,2025-02-20,pending
-Jane Smith,Assignment 2,2025-02-18,submitted
-Mike Johnson,Lab Report,2025-02-19,pending
-Sarah Williams,Final Paper,2025-02-21,pending
-Alex Brown,Quiz 1,2025-02-17,submitted
-James Wilson,Project 2,2025-02-22,pending
-Emily Davis,Assignment 3,2025-02-23,pending
-David Miller,Lab Exercise,2025-02-24,pending
-EOL
-
-# Create startup script
+# Create startup.sh in the main directory
 cat > "$main_dir/startup.sh" << 'EOL'
 #!/usr/bin/env bash
-# Script to start the submission reminder application
+# Start the submission reminder app
 
-# Change to src directory
-cd src || exit
-
-# Start the reminder script
-./reminder.sh &
-
-echo "Submission reminder application started!"
-echo "Process ID: $!"
+echo "Starting Submission Reminder App..."
+./app/reminder.sh
 EOL
-
-# Make scripts executable
-chmod +x "$main_dir/src/functions.sh"
-chmod +x "$main_dir/src/reminder.sh"
 chmod +x "$main_dir/startup.sh"
 
-# Create log file
-touch "$main_dir/logs/app.log"
+echo "Environment setup complete in directory: $main_dir"
 
-echo "Environment created successfully!"
-echo "To start the application, navigate to $main_dir and run ./startup.sh"
