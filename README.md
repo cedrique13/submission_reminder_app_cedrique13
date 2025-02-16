@@ -1,29 +1,59 @@
 # Submission Reminder App
 
-This project is a shell script-based application that helps students track their assignment submission deadlines by setting up an automated reminder system.
+## Overview
+The Submission Reminder App is a simple Bash-based script designed to help track and remind students about pending assignment submissions. It creates a structured directory with essential configuration files, a reminder script, and functions to check pending submissions.
 
-## Steps to Run and Execute
-
-### 1. Make `create_environment.sh` Executable
-Before running the script, you need to grant it execution permissions.
-
-```bash
-chmod +x create_environment.sh
+## Directory Structure
+```
+submission_reminder_<username>/
+│-- app/
+│   ├── reminder.sh
+│-- modules/
+│   ├── functions.sh
+│-- assets/
+│   ├── submissions.txt
+│-- config/
+│   ├── config.env
+│-- startup.sh
 ```
 
-### 2. Run `create_environment.sh`
-Execute the script to set up the environment. It will prompt you to enter your name, then create a directory named `submission_reminder_{yourName}` containing all necessary files and directories.
-
+## Installation & Setup
+### 1. Run the Setup Script
+To set up the submission reminder app, execute the script:
 ```bash
-./create_environment.sh
+chmod +x setup.sh  # Ensure script is executable
+./setup.sh
 ```
 
-### 3. Run the Submission Reminder App
-After running `create_environment.sh`, navigate to the newly created directory and execute the `startup.sh` script.
+### 2. Provide Input
+You will be prompted to enter your name. The script will create a personalized directory structure named `submission_reminder_<your_name>`.
 
+### 3. Start the Application
+Navigate to the created directory and run:
 ```bash
-cd submission_reminder_{yourName}
 ./startup.sh
 ```
+This will start the reminder script.
 
-This will start the submission reminder app, check for upcoming assignment deadlines, and display reminders accordingly.
+## Features
+- **Automated Setup**: The script initializes a structured directory.
+- **Assignment Tracking**: Reads a file containing students and their submission statuses.
+- **Reminders**: Displays pending assignments for students who have not submitted their work.
+
+## Configuration
+The `config.env` file contains:
+```bash
+ASSIGNMENT="Operating Systems"
+DAYS_REMAINING=3
+```
+Modify these values to change the assignment name and due date countdown.
+
+## Customization
+- **Edit `submissions.txt`**: Add or remove student names and assignments.
+- **Modify `config.env`**: Change the default assignment and due date.
+- **Extend `functions.sh`**: Implement additional features like email notifications or logs.
+
+## License
+This project is open-source and can be modified as needed.
+
+
